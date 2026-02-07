@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flash Card</title>
+
+<style>
+body {
+    background-color: #f2f2f2;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+    width: 450px;
+}
+
+.card {
+    background-color: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    min-height: 120px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+button {
+    padding: 10px 15px;
+    margin: 5px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.next { background-color: #4CAF50; color: white; }
+.skip { background-color: #f44336; color: white; }
+.reveal { background-color: #2196F3; color: white; }
+.restart { background-color: #555; color: white; }
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.result-box {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 25px;
+    background-color: #ddd;
+    border-radius: 20px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.progress-correct {
+    height: 100%;
+    background-color: #4CAF50;
+    text-align: center;
+    color: white;
+    line-height: 25px;
+}
+
+.wrong-list {
+    margin-top: 10px;
+    font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="card" id="card"></div>
+
+    <div id="buttons">
+        <button class="reveal" onclick="revealAnswer()">เฉลย</button>
+        <button class="next" onclick="markCorrect()">ตอบได้</button>
+        <button class="skip" onclick="skipCard()">ข้ามคำนี้</button>
+    </div>
+
+    <div class="result-box" id="resultBox"></div>
+</div>
+
+<script>
+
+const originalFlashcards = [
+    { word: "Apple", meaning: "แอปเปิล" },
+    { word: "Dog", meaning: "สุนัข" },
+    { word: "Book", meaning: "หนังสือ" },
+    { word: "Sun", meaning: "ดวงอาทิตย์" },
+    { word: "Water", meaning: "น้ำ" }
+];
+
+let flashcards = [];
+let currentIndex = 0;
+let score = 0;
+let revealed = false;
+let wrongAnswers = [];
+
+const card = document.getElementById("card");
+const nextBtn = document.querySelector(".next");
+const resultBox = document.getElementById("resultBox");
+
+function shuffle(array) {
+    return array.sort(() => Math.random() - 0.5);
+}
+
+function startGame() {
+    flashcards = shuffle([...originalFlashcards]);
+    currentIndex = 0;
+    score = 0;
+    revealed = false;
+    wrongAnswers = [];
+    document.getElementById("buttons").style.display = "block";
+    resultBox.innerHTML = "";
+    loadCard();
+}
+
+function loadCard() {
+    if (currentIndex >= flashcards.length) {
+        endGame();
+        return;
+    }
+    card.textContent = flashcards[currentIndex].word;
+    revealed = false;
+    nextBtn.disabled = false;
+}
+
+function revealAnswer() {
+    card.textContent = flashcards[currentIndex].meaning;
+    revealed = true;
+    nextBtn.disabled = true;
+    wrongAnswers.push(flashcards[currentIndex]);
+}
+
+function markCorrect() {
+    if (!revealed) {
+        score++;
+        currentIndex++;
+        loadCard();
+    }
+}
+
+function skipCard() {
+    if (!revealed) {
+        wrongAnswers.push(flashcards[currentIndex]);
+    }
+    currentIndex++;
+    loadCard();
+}
+
+function endGame() {
+    document.getElementById("buttons").style.display = "none";
+    card.textContent = "สรุปผลคะแนน 🎉";
+
+    let total = flashcards.length;
+    let wrong = total - score;
+    let correctPercent = ((score / total) * 100).toFixed(0);
+    let wrongPercent = 100 - correctPercent;
+
+    let html = `
+        <h3>ผลลัพธ์</h3>
+        <p>ตอบถูก: ${score} คำ (${correctPercent}%)</p>
+        <p>ตอบผิด: ${wrong} คำ (${wrongPercent}%)</p>
+
+        <div class="progress-bar">
+            <div class="progress-correct" style="width:${correctPercent}%">
+                ${correctPercent}%
+            </div>
+        </div>
+    `;
+
+    if (wrongAnswers.length > 0) {
+        html += "<h4>คำที่ตอบผิด:</h4><ul>";
+        wrongAnswers.forEach(item => {
+            html += `<li>${item.word} = ${item.meaning}</li>`;
+        });
+        html += "</ul>";
+    } else {
+        html += "<p>สุดยอด! ตอบถูกทั้งหมด 👏</p>";
+    }
+
+    html += `<button class="restart" onclick="startGame()">เริ่มใหม่</button>`;
+
+    resultBox.innerHTML = html;
+}
+
+startGame();
+
+</script>
+
+</body>
+</html>
